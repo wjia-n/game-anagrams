@@ -35,12 +35,11 @@ class Atelier {
       );
 
   static ThemeData theme(TileThemeDef t) {
-    final darkText = false;
     return ThemeData(
       useMaterial3: true,
       scaffoldBackgroundColor: t.woodDark,
       colorScheme: ColorScheme(
-        brightness: darkText ? Brightness.light : Brightness.dark,
+        brightness: Brightness.dark,
         primary: t.accent,
         onPrimary: t.woodDeep,
         secondary: t.accentLight,

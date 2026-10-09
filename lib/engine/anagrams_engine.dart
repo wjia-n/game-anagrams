@@ -113,7 +113,6 @@ class AnagramsEngine extends ChangeNotifier {
   Timer? _tick; // 1s clock for timed mode
   Timer? _watchdog; // stuck-state recovery
   void Function()? _pendingThen; // continuation armed with the phase timer
-  DateTime _phaseSince = DateTime.now();
   bool _over = false;
   bool _clockLowFired = false;
   String _lastWord = '';
@@ -360,7 +359,6 @@ class AnagramsEngine extends ChangeNotifier {
   // ---------------------------------------------------- phase machinery
   void _enterPhase(Phase p, [Duration? after, void Function()? then]) {
     phase = p;
-    _phaseSince = DateTime.now();
     _cancelPhase();
     _pendingThen = then;
     if (after != null && then != null) {
@@ -402,7 +400,7 @@ class AnagramsEngine extends ChangeNotifier {
       } else if (_pendingThen != null) {
         final then = _pendingThen;
         _pendingThen = null;
-        then();
+        then?.call();
         notifyListeners();
       } else if (revealKind == RevealKind.none) {
         for (var j = 0; j < answer.length; j++) {
