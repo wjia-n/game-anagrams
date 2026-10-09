@@ -1,25 +1,86 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:wajiha_game_core/wajiha_game_core.dart';
-import 'game_screen.dart';
+import 'package:flutter/services.dart';
+import 'screens/splash_screen.dart';
+import 'services/audio_service.dart';
+import 'services/iap_service.dart';
+import 'services/settings_service.dart';
+import 'theme/artisan_letters.dart';
 
-void main() => runApp(const AnagramsApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+  final settings = TileSettings();
+  await settings.load();
+  final audio = TileAudio();
+  audio.configure(
+    musicOn: settings.musicOn,
+    sfxOn: settings.sfxOn,
+    volume: settings.volume,
+  );
+  final store = StoreService();
+  unawaited(store.init());
+  runApp(AnagramsApp(settings: settings, audio: audio, store: store));
+}
 
-class AnagramsApp extends StatelessWidget {
-  const AnagramsApp({super.key});
+class AnagramsApp extends StatefulWidget {
+  final TileSettings settings;
+  final TileAudio audio;
+  final StoreService store;
+  const AnagramsApp(
+      {super.key,
+      required this.settings,
+      required this.audio,
+      required this.store});
+
+  @override
+  State<AnagramsApp> createState() => _AnagramsAppState();
+}
+
+class _AnagramsAppState extends State<AnagramsApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    widget.audio.dispose();
+    widget.store.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Pause (not stop) on interruption so music resumes exactly where it
+    // left off; game screens additionally freeze their engines.
+    if (state == AppLifecycleState.paused) {
+      widget.audio.onAppPaused();
+    } else if (state == AppLifecycleState.resumed) {
+      widget.audio.onAppResumed();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return GameShell(
-      variant: ShellVariant.cozyPaper,
-      title: 'Anagrams',
-      tagline: 'Unscramble the chaos — 90 seconds of pure word wizardry!',
-      emoji: '🔤',
-      slug: 'anagrams',
-      howToPlay:
-          '• You get 90 seconds on the clock. GO! ⏱️\n• Tap letter tiles to build the 6-letter word.\n• Tap a placed letter to take it back. Shuffle when stuck! 🔀\n• +100 per word, plus a streak bonus that grows as you chain solves.\n• Wrong guess or skip resets your streak. No pressure! 😅',
-      playerOptions: const [1],
-      supportsBots: false,
-      gameBuilder: (ctx, players, cb) => AnagramsScreen(players: players, callbacks: cb),
+    return ListenableBuilder(
+      listenable: widget.settings,
+      builder: (_, _) => MaterialApp(
+        title: 'Anagrams',
+        debugShowCheckedModeBanner: false,
+        theme: Atelier.theme(widget.settings.theme),
+        home: SplashScreen(
+          audio: widget.audio,
+          settings: widget.settings,
+          store: widget.store,
+        ),
+      ),
     );
   }
 }
