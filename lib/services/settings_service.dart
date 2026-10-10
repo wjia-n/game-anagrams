@@ -67,7 +67,7 @@ class TileSettings extends ChangeNotifier {
   List<int> bestTimed = [0, 0, 0, 0]; // best score per difficulty
   int bestRelaxed = 0; // most words solved in a relaxed round
   bool reviewNudged = false;
-  bool isPro = false;
+  bool isPro = true; // everything unlocked — no Pro version
 
   /// Custom theme colors (ARGB ints). Defaults mirror Classic Oak.
   Map<String, int> customColors = Map.of(_defaultCustomColors);
@@ -144,7 +144,7 @@ class TileSettings extends ChangeNotifier {
     ];
     bestRelaxed = p.getInt(_kBestRelaxed) ?? 0;
     reviewNudged = p.getBool(_kReviewNudged) ?? false;
-    isPro = p.getBool(_kIsPro) ?? false;
+    isPro = true; // everything unlocked
     for (final k in _defaultCustomColors.keys) {
       customColors[k] = p.getInt('$_kCustomPrefix$k') ?? _defaultCustomColors[k]!;
     }
