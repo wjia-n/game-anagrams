@@ -8,6 +8,7 @@ import '../theme/artisan_letters.dart';
 import '../theme/tile_themes.dart';
 import 'custom_theme_screen.dart';
 import 'pro_screen.dart';
+import '../transfer/transfer_ui.dart';
 
 /// Settings: audio, renameable players, themes, tile styles, custom theme
 /// creator, stats, share, review, reset.
@@ -73,6 +74,7 @@ class SettingsScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+              TransferSaveTile(gameSlug: 'anagrams'),
                   Text('Sound', style: Atelier.label(15, theme: t)),
                   const SizedBox(height: 8),
                   WoodCard(
