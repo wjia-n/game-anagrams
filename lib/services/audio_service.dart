@@ -289,22 +289,34 @@ class TileAudio {
     if (_currentTrack == track && !_pausedByLifecycle) {
       // Already on this track — make sure it is actually audible.
       try {
-        await _music.resume();
+        await _music.resume().timeout(
+          const Duration(seconds: 2),
+          onTimeout: () {},
+        );
       } catch (_) {}
       return;
     }
-    // Wait for any in-flight op, then bail if superseded meanwhile.
-    while (_musicBusy) {
+    // Wait for any in-flight op (max ~3s), then bail if superseded meanwhile.
+    var waitCount = 0;
+    while (_musicBusy && waitCount < 100) {
       await Future.delayed(const Duration(milliseconds: 30));
+      waitCount++;
     }
+    if (_musicBusy) _musicBusy = false; // force-reset stuck flag
     if (gen != _musicGen || _disposed || !musicOn) return;
     _musicBusy = true;
     try {
-      await _music.stop();
+      await _music.stop().timeout(
+        const Duration(seconds: 2),
+        onTimeout: () {},
+      );
       if (gen != _musicGen || _disposed || !musicOn) return;
       _currentTrack = track;
       _pausedByLifecycle = false;
-      await _music.play(BytesSource(bytes()));
+      await _music.play(BytesSource(bytes())).timeout(
+        const Duration(seconds: 3),
+        onTimeout: () {},
+      );
     } catch (_) {
       if (gen == _musicGen) _currentTrack = null;
     } finally {
@@ -319,12 +331,18 @@ class TileAudio {
   /// the user turns music OFF — never on screen navigation.
   Future<void> stopMusic() async {
     ++_musicGen; // cancel any in-flight start
-    while (_musicBusy) {
+    var waitCount = 0;
+    while (_musicBusy && waitCount < 100) {
       await Future.delayed(const Duration(milliseconds: 30));
+      waitCount++;
     }
+    if (_musicBusy) _musicBusy = false; // force-reset stuck flag
     if (_disposed) return;
     try {
-      await _music.stop();
+      await _music.stop().timeout(
+        const Duration(seconds: 2),
+        onTimeout: () {},
+      );
     } catch (_) {}
     _currentTrack = null;
     _pausedByLifecycle = false;
@@ -335,7 +353,10 @@ class TileAudio {
   Future<void> onAppPaused() async {
     if (_disposed || _currentTrack == null) return;
     try {
-      await _music.pause();
+      await _music.pause().timeout(
+        const Duration(seconds: 2),
+        onTimeout: () {},
+      );
       _pausedByLifecycle = true;
     } catch (_) {}
   }
@@ -345,7 +366,10 @@ class TileAudio {
     if (_disposed || !musicOn || !_pausedByLifecycle) return;
     _pausedByLifecycle = false;
     try {
-      await _music.resume();
+      await _music.resume().timeout(
+        const Duration(seconds: 2),
+        onTimeout: () {},
+      );
     } catch (_) {
       // Resume failed (e.g. player was released) — restart the track.
       final track = _currentTrack;

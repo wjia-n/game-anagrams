@@ -47,7 +47,9 @@ class _MenuScreenState extends State<MenuScreen> {
   }
 
   void _play() {
-    widget.audio.click();
+    try {
+      widget.audio.click();
+    } catch (_) {}
     final s = widget.settings;
     Navigator.of(context).push(
       MaterialPageRoute(
